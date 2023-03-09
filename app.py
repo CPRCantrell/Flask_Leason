@@ -2,6 +2,7 @@ from flask import Flask, request
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
+from marshmallow import post_load, fields, ValidationError
 from flask_migrate import Migrate
 from flask_restful import Api, Resource
 from dotenv import load_dotenv
@@ -34,8 +35,17 @@ class Car(db.Model):
 
 # Schemas -- translate into JSON (interpreter between languages)
 class CarSchema(ma.Schema):
+    id = fields.Integer(primary_key=True)
+    make = fields.String(required=True)
+    model = fields.String(required=True)
+    year = fields.Integer()
+
     class Meta:
         fields = ("id", "make", "model", "year")
+
+    @post_load
+    def create_car(self, data, **kwargs):
+        return Car(**data)
 
 car_schema = CarSchema()
 cars_schema = CarSchema(many=True)
@@ -46,10 +56,13 @@ class CarListResource(Resource):
         return cars_schema.dump(Car.query.all())
 
     def post(self):
-        add_car = Car(make=request.json['make'],model=request.json['model'],year=request.json['year'])
-        db.session.add(add_car)
-        db.session.commit()
-        return car_schema.dump(add_car), 201
+        try:
+            add_car = car_schema.load(request.get_json())
+            db.session.add(add_car)
+            db.session.commit()
+            return car_schema.dump(add_car), 201
+        except ValidationError as err:
+            return err.messages, 400
 
 class CarResourse(Resource):
     def get(self, car_id):
