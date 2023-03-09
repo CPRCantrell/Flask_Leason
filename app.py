@@ -34,14 +34,20 @@ class Car(db.Model):
 
 # Schemas -- translate into JSON (interpreter between languages)
 class CarSchema(ma.Schema):
-    class meta:
-        fields = ('id', 'make', 'model', 'year')
+    class Meta:
+        fields = ("id", "make", "model", "year")
 
 car_schema = CarSchema()
 cars_schema = CarSchema(many=True)
 
 # Resources
+class CarListResource(Resource):
+    def get(self):
+        all_cars = Car.query.all()
+        return cars_schema.dump(all_cars)
 
-
+    def post(self):
+        pass
 
 # Routes
+api.add_resource(CarListResource, '/api/cars')
