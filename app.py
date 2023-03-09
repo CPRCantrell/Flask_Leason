@@ -22,13 +22,23 @@ api = Api(app)
 CORS(app)
 Migrate(app, db)
 
-# Models
+# Models  -- plans out database
+class Car(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    make = db.Column(db.String(255), nullable=False)
+    model = db.Column(db.String(255), nullable=False)
+    year = db.Column(db.Integer)
 
+    def __repr__(self) -> str:
+        return f'{self.year} {self.make} {self.model}'
 
+# Schemas -- translate into JSON (interpreter between languages)
+class CarSchema(ma.Schema):
+    class meta:
+        fields = ('id', 'make', 'model', 'year')
 
-# Schemas
-
-
+car_schema = CarSchema()
+cars_schema = CarSchema(many=True)
 
 # Resources
 
